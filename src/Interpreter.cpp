@@ -133,7 +133,7 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
         ch=sourceFile.get();
 
-        if(ch==EOF)
+        if(ch==std::ifstream::traits_type::eof())
             break;
 
         switch( static_cast<char>(ch) )
@@ -305,7 +305,6 @@ void Interpreter::executeCode(std::istream &stdInput)
     int stdinChar;
     Instruction *code=&mCode.front();
     Instruction *toExecute=code;
-    //CellType *dataPtr=&mCellArray.front();
 
     CellType *cellArray=&mCellArray.front();
     unsigned int dataPtr=0;
@@ -319,7 +318,7 @@ void Interpreter::executeCode(std::istream &stdInput)
         case OPeditVal:
 
             cellArray[dataPtr]+=toExecute->parameter;
-            //*dataPtr+=toExecute->parameter;
+
 
 
             break;
@@ -327,14 +326,13 @@ void Interpreter::executeCode(std::istream &stdInput)
         case OPmovePtr:
 
             dataPtr+=toExecute->parameter;
-            //dataPtr+=toExecute->parameter;
+
 
             break;
 
         case OPjumpOnZero:
 
             if(!cellArray[dataPtr])
-            //if(! *dataPtr)
                 toExecute=&code[toExecute->parameter];
 
                 break;
@@ -342,7 +340,6 @@ void Interpreter::executeCode(std::istream &stdInput)
         case OPjumpOnNonZero:
 
             if(cellArray[dataPtr])
-            //if(*dataPtr)
                 toExecute=&code[toExecute->parameter];
 
             break;
@@ -353,14 +350,12 @@ void Interpreter::executeCode(std::istream &stdInput)
 
             cellArray[dataPtr+toExecute->parameter]+=cellArray[dataPtr]*toExecute->parameter2;
 
-            //*(dataPtr+toExecute->parameter) += *dataPtr * toExecute->parameter2;
-
             break;
 
         case OPsetZero:
 
             cellArray[dataPtr]=0;
-            //*dataPtr=0;
+
 
             break;
 
@@ -368,7 +363,7 @@ void Interpreter::executeCode(std::istream &stdInput)
         case OPprint:
 
             std::cout<<static_cast<char>(cellArray[dataPtr]);
-            //std::cout<<static_cast<char>(*dataPtr);
+
 
 
             break;
@@ -377,33 +372,21 @@ void Interpreter::executeCode(std::istream &stdInput)
 
             stdinChar=stdInput.get();
 
-            if(stdinChar != EOF)
+            if(stdinChar != std::ifstream::traits_type::eof())
                 cellArray[dataPtr]=stdinChar;
-                //*dataPtr=stdinChar;
+
 
 
             break;
 
         case OPdebug:
 
-            //Commenting out OPdebug implementation causes speedup
 
             std::cout<<"Position within the code: "<<toExecute->parameter<<'\n';
             std::cout<<"Pointer value: "<<dataPtr<<'\n';
             std::cout<<"Value at pointer: "<<cellArray[dataPtr]<<'\n';
 
             std::cin.get();
-
-
-            /*std::cout<<"Position within the code: "<<toExecute->parameter<<'\n';
-            std::cout<<"Pointer value: "<<dataPtr - &mCellArray.front()<<'\n';
-            std::cout<<"Value at pointer: "<<*dataPtr<<'\n';
-
-            std::cin.get();*/
-
-
-
-
 
             break;
 
