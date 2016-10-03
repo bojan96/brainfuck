@@ -1,0 +1,8 @@
+bf.depend
+bf.layout
+bin/
+*.txt
+obj/
+samples/
+test.bat
+Bf.cfg

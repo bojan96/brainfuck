@@ -4,6 +4,7 @@
 #include <stack>
 #include <map>
 #include <algorithm>
+#include <cassert>
 
 
 
@@ -11,9 +12,9 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
 {
     std::ofstream file(filename.c_str());
 
-    int codeSize=code.size();
+    int codeSize = code.size();
 
-    for(int i=0;i<codeSize;i++)
+    for(int i = 0; i<codeSize ;i++)
     {
 
         switch(code[i].opcode)
@@ -85,6 +86,8 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
         file<<'\n';
     }
 
+    file<<"------------------------\nCode size: "<<codeSize;
+
 
 
     return;
@@ -117,23 +120,23 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 {
 
     int ch;
-    int codePos=0;
+    int codePos = 0;
     Instruction instr;
     std::stack<int> loopStack;
 
     //Variables related to loop optimizations
-    int relativePointer=0;
-    int loopCounter=0;
-    bool hasPrintRead=false;
-    bool recentPop=false;
+    int relativePointer = 0;
+    int loopCounter = 0;
+    bool hasPrintRead = false;
+    bool recentPop = false;
 
 
     while(true)
     {
 
-        ch=sourceFile.get();
+        ch = sourceFile.get();
 
-        if(ch==std::ifstream::traits_type::eof())
+        if(ch == std::ifstream::traits_type::eof())
             break;
 
         switch( static_cast<char>(ch) )
@@ -152,7 +155,7 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
 
             //Loop optimization related code
-            loopCounter+= relativePointer==0 ? 1:0;
+            loopCounter += relativePointer == 0 ? 1:0;
 
 
 
@@ -162,15 +165,15 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
             if(mCode.empty() || mCode.back().opcode != OPeditVal )
             {
-                instr.opcode=OPeditVal;
-                instr.parameter=-1;
+                instr.opcode = OPeditVal;
+                instr.parameter = -1;
                 mCode.push_back(instr);
             }
             else if( --mCode.back().parameter == 0)
                 mCode.pop_back();
 
             //Loop optimization related code
-            loopCounter-= relativePointer==0 ? 1:0;
+            loopCounter -= relativePointer == 0 ? 1:0;
 
             break;
 
@@ -178,8 +181,8 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
             if(mCode.empty() || mCode.back().opcode != OPmovePtr)
             {
-                instr.opcode=OPmovePtr;
-                instr.parameter=1;
+                instr.opcode = OPmovePtr;
+                instr.parameter = 1;
                 mCode.push_back(instr);
             }
             else if( ++mCode.back().parameter == 0)
@@ -195,8 +198,8 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
             if(mCode.empty() || mCode.back().opcode !=OPmovePtr)
             {
-                instr.opcode=OPmovePtr;
-                instr.parameter=-1;
+                instr.opcode = OPmovePtr;
+                instr.parameter = -1;
                 mCode.push_back(instr);
             }
             else if ( --mCode.back().parameter == 0)
@@ -210,14 +213,14 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
         case '[':
 
-            instr.opcode=OPjumpOnZero;
+            instr.opcode = OPjumpOnZero;
             mCode.push_back(instr);
-            loopStack.push(mCode.size()-1);
+            loopStack.push(mCode.size() - 1);
 
             //Loop optimzation related code
-            relativePointer=0;
-            loopCounter=0;
-            hasPrintRead=recentPop=false;
+            relativePointer = 0;
+            loopCounter = 0;
+            hasPrintRead = recentPop = false;
 
             break;
 
@@ -236,12 +239,12 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
                     mLoopsToOptimize.insert(loopStack.top());
                 }
 
-                instr.opcode=OPjumpOnNonZero;
-                instr.parameter=loopStack.top();
+                instr.opcode = OPjumpOnNonZero;
+                instr.parameter = loopStack.top();
                 mCode.push_back(instr);
-                mCode[loopStack.top()].parameter=mCode.size()-1;
+                mCode[loopStack.top()].parameter = mCode.size() - 1;
                 loopStack.pop();
-                recentPop=true;
+                recentPop = true;
             }
 
 
@@ -249,19 +252,19 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
         case '.':
 
-            instr.opcode=OPprint;
+            instr.opcode = OPprint;
 
             mCode.push_back(instr);
-            hasPrintRead=true;
+            hasPrintRead = true;
 
             break;
 
         case ',':
 
-            instr.opcode=OPread;
+            instr.opcode = OPread;
             mCode.push_back(instr);
 
-            hasPrintRead=true;
+            hasPrintRead = true;
 
             break;
 
@@ -269,8 +272,8 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
             if(debugMode)
             {
-                instr.opcode=OPdebug;
-                instr.parameter=codePos;
+                instr.opcode = OPdebug;
+                instr.parameter = codePos;
 
                 mCode.push_back(instr);
 
@@ -291,7 +294,7 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
         return false;
     }
 
-    instr.opcode=OPend;
+    instr.opcode = OPend;
     mCode.push_back(instr);
 
 
@@ -303,11 +306,11 @@ void Interpreter::executeCode(std::istream &stdInput)
 {
 
     int stdinChar;
-    Instruction *code=&mCode.front();
-    Instruction *toExecute=code;
+    Instruction *code = &mCode.front();
+    Instruction *toExecute = code;
 
-    CellType *cellArray=&mCellArray.front();
-    unsigned int dataPtr=0;
+    CellType *cellArray = &mCellArray.front();
+    unsigned int dataPtr = 0;
 
     while(true)
     {
@@ -317,30 +320,27 @@ void Interpreter::executeCode(std::istream &stdInput)
 
         case OPeditVal:
 
-            cellArray[dataPtr]+=toExecute->parameter;
-
-
+            cellArray[dataPtr] += toExecute->parameter;
 
             break;
 
         case OPmovePtr:
 
-            dataPtr+=toExecute->parameter;
-
+            dataPtr += toExecute->parameter;
 
             break;
 
         case OPjumpOnZero:
 
             if(!cellArray[dataPtr])
-                toExecute=&code[toExecute->parameter];
+                toExecute = &code[toExecute->parameter];
 
                 break;
 
         case OPjumpOnNonZero:
 
             if(cellArray[dataPtr])
-                toExecute=&code[toExecute->parameter];
+                toExecute = &code[toExecute->parameter];
 
             break;
 
@@ -348,14 +348,13 @@ void Interpreter::executeCode(std::istream &stdInput)
 
         case OPloopAdd:
 
-            cellArray[dataPtr+toExecute->parameter]+=cellArray[dataPtr]*toExecute->parameter2;
+            cellArray[dataPtr + toExecute->parameter] += cellArray[dataPtr] * toExecute->parameter2;
 
             break;
 
         case OPsetZero:
 
-            cellArray[dataPtr]=0;
-
+            cellArray[dataPtr] = 0;
 
             break;
 
@@ -364,17 +363,14 @@ void Interpreter::executeCode(std::istream &stdInput)
 
             std::cout<<static_cast<char>(cellArray[dataPtr]);
 
-
-
             break;
 
         case OPread:
 
-            stdinChar=stdInput.get();
+            stdinChar = stdInput.get();
 
             if(stdinChar != std::ifstream::traits_type::eof())
-                cellArray[dataPtr]=stdinChar;
-
+                cellArray[dataPtr] = stdinChar;
 
 
             break;
@@ -423,49 +419,49 @@ void Interpreter::optimizeLoops()
 {
 
     std::vector<Instruction> optimizedCode;
-    std::set<int>::iterator mLoopsToOptimizeEnd=mLoopsToOptimize.end();
+    std::set<int>::iterator mLoopsToOptimizeEnd = mLoopsToOptimize.end();
     std::map<int,int> loopAddOpcodes;
-    std::map<int,int>::iterator loopAddEnd=loopAddOpcodes.end();
+    std::map<int,int>::iterator loopAddEnd = loopAddOpcodes.end();
     std::map<int,int>::iterator loopAddBegin;
     std::stack<int> loopStack;
 
     Instruction instr;
     Instruction *toInspect;
-    int codeSize=mCode.size();
-    int relativePointer=0;
-    bool scanLoop=false;
+    int codeSize = mCode.size();
+    int relativePointer = 0;
+    bool scanLoop = false;
 
     optimizedCode.reserve(mCode.size());
 
-    for(int i=0;i<codeSize;++i)
+    for(int i = 0; i<codeSize; ++i)
     {
 
-        toInspect=&mCode[i];
+        toInspect = &mCode[i];
 
 
         if(!scanLoop)
         {
-            if(toInspect->opcode==OPjumpOnZero )
+            if(toInspect->opcode == OPjumpOnZero )
             {
 
                 //Is this loop to optimize, if yes start scan
-                if(mLoopsToOptimize.find(i)!=mLoopsToOptimizeEnd)
+                if(mLoopsToOptimize.find(i) != mLoopsToOptimizeEnd)
                 scanLoop=true;
 
                 else
                 {
                     optimizedCode.push_back(*toInspect);
-                    loopStack.push(optimizedCode.size()-1);
+                    loopStack.push(optimizedCode.size() - 1);
                 }
             }
 
             //Correct loop jumps
-            else if(toInspect->opcode==OPjumpOnNonZero)
+            else if(toInspect->opcode == OPjumpOnNonZero)
             {
-                instr.opcode=OPjumpOnNonZero;
-                instr.parameter=loopStack.top();
+                instr.opcode = OPjumpOnNonZero;
+                instr.parameter = loopStack.top();
                 optimizedCode.push_back(instr);
-                optimizedCode[loopStack.top()].parameter=optimizedCode.size()-1;
+                optimizedCode[loopStack.top()].parameter = optimizedCode.size() - 1;
                 loopStack.pop();
 
 
@@ -488,30 +484,30 @@ void Interpreter::optimizeLoops()
 
 
                 //Dont care about counter variable
-                if(relativePointer!=0)
+                if(relativePointer != 0)
                 {
-                    if(loopAddOpcodes.find(relativePointer)!=loopAddEnd)
-                        loopAddOpcodes[relativePointer]+=toInspect->parameter;
+                    if(loopAddOpcodes.find(relativePointer) != loopAddEnd)
+                        loopAddOpcodes[relativePointer] += toInspect->parameter;
                     else
-                        loopAddOpcodes[relativePointer]=toInspect->parameter;
+                        loopAddOpcodes[relativePointer] = toInspect->parameter;
                 }
 
                 break;
 
             case OPmovePtr:
 
-                relativePointer+=toInspect->parameter;
+                relativePointer += toInspect->parameter;
 
                 break;
 
             case OPjumpOnNonZero:
 
 
-                scanLoop=false;
-                relativePointer=0;
+                scanLoop = false;
+                relativePointer = 0;
 
 
-                for(loopAddBegin=loopAddOpcodes.begin(); loopAddBegin!=loopAddEnd ; ++loopAddBegin)
+                for(loopAddBegin = loopAddOpcodes.begin(); loopAddBegin != loopAddEnd ; ++loopAddBegin)
                 {
 
                     /*
@@ -522,11 +518,11 @@ void Interpreter::optimizeLoops()
 
                     */
 
-                    if(loopAddBegin->second!=0)
+                    if(loopAddBegin->second != 0)
                     {
-                    instr.opcode=OPloopAdd;
-                    instr.parameter=loopAddBegin->first;
-                    instr.parameter2=loopAddBegin->second;
+                    instr.opcode = OPloopAdd;
+                    instr.parameter = loopAddBegin->first;
+                    instr.parameter2 = loopAddBegin->second;
                     optimizedCode.push_back(instr);
                     }
 
@@ -534,7 +530,7 @@ void Interpreter::optimizeLoops()
                 }
 
                 loopAddOpcodes.clear();
-                instr.opcode=OPsetZero;
+                instr.opcode = OPsetZero;
                 optimizedCode.push_back(instr);
 
 
@@ -543,6 +539,7 @@ void Interpreter::optimizeLoops()
 
             // Supress warnings
             default:
+
                 break;
 
 
@@ -554,15 +551,10 @@ void Interpreter::optimizeLoops()
     }
 
 
-    //dumpCode(optimizedCode,"optimizedCode.txt");
-    //dumpCode(mCode,"code.txt");
+    dumpCode(optimizedCode,"optimizedCode.txt");
+    dumpCode(mCode,"code.txt");
 
-    mCode=optimizedCode;
-
-
-
-
-
+    mCode = optimizedCode;
 
 
     return;

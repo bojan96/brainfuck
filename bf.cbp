@@ -21,9 +21,10 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="samples/mandelbrot.bf" />
+				<Option parameters="samples/hanoi.bf" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-DNDEBUG" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />

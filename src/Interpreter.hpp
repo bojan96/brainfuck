@@ -46,10 +46,15 @@ private:
     struct Instruction
     {
         Opcode opcode;
+
+        // OPeditVal, OPmovePtr, OPjumpOnZero, OPjumpOnNonZero,OPdebug
         int parameter;
 
-        //Loop optimization related code
+        // OPloopAdd
         int parameter2;
+
+
+
 
 
     };

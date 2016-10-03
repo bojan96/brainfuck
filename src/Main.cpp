@@ -46,7 +46,7 @@ private:
     }
 
 
-    void displayHelp(char *argv[])
+    void displayHelp(std::ostream &stream)
     {
 
         const std::string options[][2]=
@@ -60,15 +60,15 @@ private:
         };
 
 
-        std::cout<<"Usage: bf filename [options]\n";
-        std::cout<<"options: \n";
+        stream<<"Usage: bf filename [options]\n";
+        stream<<"options: \n";
 
         for(int i=0; i<4; ++i)
         {
-            std::cout<<std::setw(20)<<std::left<<options[i][0]<<options[i][1]<<'\n';
+            stream<<std::setw(20)<<std::left<<options[i][0]<<options[i][1]<<'\n';
         }
 
-        std::cout<<"NOTE: If you specify mutliple inputs or sizes the last one will be used\n";
+        stream<<"NOTE: If you specify mutliple inputs or sizes the last one will be used\n";
 
 
         return;
@@ -81,26 +81,21 @@ private:
         std::string stdinString;
         std::string stdinFilename;
         int arraySize;
+        bool fileSpecified=false;
 
         if(argc < 2)
         {
-            displayHelp(argv);
+            displayHelp(std::cerr);
             return false;
         }
 
-        mSourceFile.open(argv[1]);
 
-        if(! mSourceFile.is_open())
+        for(int i=1; i<argc; ++i)
         {
-            std::cout<<"Could not open the file: "<<argv[1]<<'\n';
-            return false;
-        }
 
-        for(int i=2; i<argc; ++i)
-        {
 
             if(argv[i][0]=='-')
-            {
+
                 switch(argv[i][1])
                 {
 
@@ -156,13 +151,39 @@ private:
 
                     break;
 
+                case 'h':
+
+                    displayHelp(std::cout);
+                    return false;
+
+                    break;
+
+                default:
+
+                    std::cerr<<"Invalid option: "<<argv[i];
+                    return false;
+
+                    break;
+
 
                 }
-            }
-            else
+
+            else if(!fileSpecified)
             {
-                std::cout<<"Invalid option: "<<argv[i]<<'\n';
+                fileSpecified=true;
+
+                mSourceFile.open(argv[i]);
+
+                if(! mSourceFile.is_open())
+                {
+                    std::cerr<<"Could not open the file: "<<argv[i];
+                    return false;
+                }
+
             }
+
+
+
 
 
         }
@@ -174,7 +195,7 @@ private:
 
             if(! file->is_open())
             {
-                std::cout<<"Could not open the file: "<<stdinFilename<<'\n';
+                std::cerr<<"Could not open the file: "<<stdinFilename<<'\n';
                 return false;
             }
 
