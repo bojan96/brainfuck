@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <sstream>
 #include <cstddef>
+#include <string>
 #include "Interpreter.hpp"
 
 class Bf
@@ -34,7 +35,7 @@ public:
 
 private:
 
-    bool strToInt(const char *str,int &n)
+    bool strToInt(const std::string &str,int &n)
     {
         std::istringstream stream(str);
         char ch;
@@ -68,7 +69,7 @@ private:
             stream<<std::setw(20)<<std::left<<options[i][0]<<options[i][1]<<'\n';
         }
 
-        stream<<"NOTE: If you specify mutliple inputs or sizes the last one will be used\n";
+        stream<<"NOTE: If you specify mutliple options the last one will be used\n";
 
 
         return;

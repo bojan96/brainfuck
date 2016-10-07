@@ -22,7 +22,8 @@ private:
     void executeCode(std::istream &stdInput);
     void init(std::size_t arraySize);
     void optimizeLoops();
-    void performOptimizations(bool debugMode);
+    void performOptimizations();
+    void stripMovePtr();
 
 
 
@@ -53,7 +54,10 @@ private:
         // OPloopAdd
         int parameter2;
 
+        // Avoid decoding OPmovePtr
+        int parameter3;
 
+        Instruction():parameter3(0){}
 
 
 

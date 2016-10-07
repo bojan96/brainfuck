@@ -14,7 +14,7 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
 
     int codeSize = code.size();
 
-    for(int i = 0; i<codeSize ;i++)
+    for(int i = 0; i < codeSize ;i++)
     {
 
         switch(code[i].opcode)
@@ -106,7 +106,10 @@ void Interpreter::run(std::ifstream &sourceFile,std::istream &stdInput,std::size
 
     if(parseFile(sourceFile,debugMode))
     {
-        performOptimizations(debugMode);
+
+        if(!debugMode)
+            performOptimizations();
+
         executeCode(stdInput);
     }
 
@@ -234,7 +237,7 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
             else
             {
                 //Loop optimization related code
-                if(!recentPop && loopCounter==-1 && relativePointer==0 && !hasPrintRead)
+                if(!recentPop && loopCounter == -1 && relativePointer == 0 && !hasPrintRead)
                 {
                     mLoopsToOptimize.insert(loopStack.top());
                 }
@@ -314,6 +317,8 @@ void Interpreter::executeCode(std::istream &stdInput)
 
     while(true)
     {
+
+        dataPtr += toExecute->parameter3;
 
         switch(toExecute->opcode)
         {
@@ -408,7 +413,7 @@ finish:
 void Interpreter::init(std::size_t arraySize)
 {
 
-    mCellArray=std::vector<CellType>(arraySize);
+    mCellArray = std::vector<CellType>(arraySize);
     std::fill(mCellArray.begin(),mCellArray.end(),0);
 
     return;
@@ -433,7 +438,7 @@ void Interpreter::optimizeLoops()
 
     optimizedCode.reserve(mCode.size());
 
-    for(int i = 0; i<codeSize; ++i)
+    for(int i = 0; i < codeSize; ++i)
     {
 
         toInspect = &mCode[i];
@@ -446,7 +451,7 @@ void Interpreter::optimizeLoops()
 
                 //Is this loop to optimize, if yes start scan
                 if(mLoopsToOptimize.find(i) != mLoopsToOptimizeEnd)
-                scanLoop=true;
+                    scanLoop = true;
 
                 else
                 {
@@ -520,10 +525,11 @@ void Interpreter::optimizeLoops()
 
                     if(loopAddBegin->second != 0)
                     {
-                    instr.opcode = OPloopAdd;
-                    instr.parameter = loopAddBegin->first;
-                    instr.parameter2 = loopAddBegin->second;
-                    optimizedCode.push_back(instr);
+
+                        instr.opcode = OPloopAdd;
+                        instr.parameter = loopAddBegin->first;
+                        instr.parameter2 = loopAddBegin->second;
+                        optimizedCode.push_back(instr);
                     }
 
 
@@ -551,8 +557,7 @@ void Interpreter::optimizeLoops()
     }
 
 
-    dumpCode(optimizedCode,"optimizedCode.txt");
-    dumpCode(mCode,"code.txt");
+
 
     mCode = optimizedCode;
 
@@ -561,12 +566,84 @@ void Interpreter::optimizeLoops()
 }
 
 
-void Interpreter::performOptimizations(bool debugMode)
+void Interpreter::performOptimizations()
 {
-    if(debugMode)
-        return;
 
     optimizeLoops();
+    stripMovePtr();
+
+    return;
+}
+
+
+void Interpreter::stripMovePtr()
+{
+
+    int codeSize = mCode.size();
+    int movePtrVal = 0;
+
+    std::vector<Instruction> optimizedCode;
+    std::stack<int> loopStack;
+
+
+    for(int i = 0; i < codeSize; ++i)
+    {
+
+
+        switch(mCode[i].opcode)
+        {
+
+            case OPmovePtr:
+
+                movePtrVal = mCode[i].parameter;
+
+                break;
+
+            default:
+
+                mCode[i].parameter3 = movePtrVal;
+                movePtrVal = 0;
+
+
+                switch(mCode[i].opcode)
+                {
+
+                    case OPjumpOnZero:
+
+                        optimizedCode.push_back(mCode[i]);
+                        loopStack.push(optimizedCode.size() - 1);
+
+                        break;
+
+                    case OPjumpOnNonZero:
+
+                        mCode[i].parameter = loopStack.top();
+                        optimizedCode.push_back(mCode[i]);
+                        optimizedCode[loopStack.top()].parameter = optimizedCode.size() - 1;
+                        loopStack.pop();
+
+                        break;
+
+                    default:
+
+                        optimizedCode.push_back(mCode[i]);
+
+                        break;
+                }
+
+
+
+                break;
+
+        }
+
+
+    }
+
+    dumpCode(optimizedCode,"optimizedCode.txt");
+    dumpCode(mCode,"code.txt");
+
+    mCode = optimizedCode;
 
     return;
 }
