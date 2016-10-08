@@ -29,7 +29,7 @@ public:
 
         }
 
-        return;
+
     }
 
 
@@ -72,7 +72,7 @@ private:
         stream<<"NOTE: If you specify mutliple options the last one will be used\n";
 
 
-        return;
+
     }
 
     bool parseArgs(int argc,char *argv[])

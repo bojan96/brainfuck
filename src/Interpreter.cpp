@@ -88,9 +88,6 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
 
     file<<"------------------------\nCode size: "<<codeSize;
 
-
-
-    return;
 }
 
 
@@ -114,7 +111,6 @@ void Interpreter::run(std::ifstream &sourceFile,std::istream &stdInput,std::size
     }
 
 
-    return;
 }
 
 
@@ -407,7 +403,7 @@ void Interpreter::executeCode(std::istream &stdInput)
 
 finish:
 
-    return;
+
 }
 
 void Interpreter::init(std::size_t arraySize)
@@ -416,7 +412,6 @@ void Interpreter::init(std::size_t arraySize)
     mCellArray = std::vector<CellType>(arraySize);
     std::fill(mCellArray.begin(),mCellArray.end(),0);
 
-    return;
 }
 
 
@@ -545,24 +540,17 @@ void Interpreter::optimizeLoops()
 
             // Supress warnings
             default:
-
                 break;
 
 
             }
 
-
         }
 
     }
 
-
-
-
     mCode = optimizedCode;
 
-
-    return;
 }
 
 
@@ -572,7 +560,6 @@ void Interpreter::performOptimizations()
     optimizeLoops();
     stripMovePtr();
 
-    return;
 }
 
 
@@ -645,5 +632,5 @@ void Interpreter::stripMovePtr()
 
     mCode = optimizedCode;
 
-    return;
+
 }
