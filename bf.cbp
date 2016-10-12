@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="samples/mandelbrot.bf" />
+				<Option parameters="samples/hanoi.bf" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -21,7 +21,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="samples/hanoi.bf" />
+				<Option parameters="samples/mandelbrot.bf" />
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-DNDEBUG" />
@@ -35,7 +35,7 @@
 			<Add option="-pedantic-errors" />
 			<Add option="-pedantic" />
 			<Add option="-Wall" />
-			<Add option="-std=c++03" />
+			<Add option="-std=c++11" />
 		</Compiler>
 		<Unit filename="src/Interpreter.cpp" />
 		<Unit filename="src/Interpreter.hpp" />

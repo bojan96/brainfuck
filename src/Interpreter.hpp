@@ -12,8 +12,6 @@ class Interpreter
 
 public:
 
-    Interpreter();
-
     void run(std::ifstream &sourceFile,std::istream &stdInput,std::size_t arraySize,bool debugMode);
 
 private:
@@ -24,9 +22,6 @@ private:
     void optimizeLoops();
     void performOptimizations();
     void stripMovePtr();
-
-
-
 
 
     enum Opcode
@@ -46,6 +41,7 @@ private:
 
     struct Instruction
     {
+
         Opcode opcode;
 
         // OPeditVal, OPmovePtr, OPjumpOnZero, OPjumpOnNonZero,OPdebug
@@ -58,8 +54,6 @@ private:
         int parameter3;
 
         Instruction():parameter3(0){}
-
-
 
     };
 
