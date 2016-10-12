@@ -4,14 +4,13 @@
 #include <stack>
 #include <map>
 #include <algorithm>
-#include <cassert>
-
+#include <utility>
 
 
 void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::string &filename)
 {
-    std::ofstream file(filename.c_str());
 
+    std::ofstream file(filename.c_str());
     int codeSize = code.size();
 
     for(int i = 0; i < codeSize ;i++)
@@ -83,18 +82,16 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
 
         }
 
-        file<<'\n';
+        //if(code[i].opcode != OPeditVal)
+        file<<", "<<code[i].parameter3<<"\n";
+
+        ;
     }
 
     file<<"------------------------\nCode size: "<<codeSize;
 
 }
 
-
-Interpreter::Interpreter()
-{
-    mCode.reserve(1000);
-}
 
 void Interpreter::run(std::ifstream &sourceFile,std::istream &stdInput,std::size_t arraySize,bool debugMode)
 {
@@ -252,7 +249,6 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
         case '.':
 
             instr.opcode = OPprint;
-
             mCode.push_back(instr);
             hasPrintRead = true;
 
@@ -262,7 +258,6 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
             instr.opcode = OPread;
             mCode.push_back(instr);
-
             hasPrintRead = true;
 
             break;
@@ -273,10 +268,10 @@ bool Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
             {
                 instr.opcode = OPdebug;
                 instr.parameter = codePos;
-
                 mCode.push_back(instr);
 
             }
+
             break;
 
         default:
@@ -379,10 +374,9 @@ void Interpreter::executeCode(std::istream &stdInput)
         case OPdebug:
 
 
-            std::cout<<"Position within the code: "<<toExecute->parameter<<'\n';
-            std::cout<<"Pointer value: "<<dataPtr<<'\n';
-            std::cout<<"Value at pointer: "<<cellArray[dataPtr]<<'\n';
-
+            std::cout<<"Position within the code: "<<toExecute->parameter<<"\n";
+            std::cout<<"Pointer value: "<<dataPtr<<"\n";
+            std::cout<<"Value at pointer: "<<cellArray[dataPtr]<<"\n";
             std::cin.get();
 
             break;
@@ -401,7 +395,7 @@ void Interpreter::executeCode(std::istream &stdInput)
 
     }
 
-finish:
+finish:;
 
 
 }
@@ -419,10 +413,9 @@ void Interpreter::optimizeLoops()
 {
 
     std::vector<Instruction> optimizedCode;
-    std::set<int>::iterator mLoopsToOptimizeEnd = mLoopsToOptimize.end();
+    auto mLoopsToOptimizeEnd = mLoopsToOptimize.end();
     std::map<int,int> loopAddOpcodes;
-    std::map<int,int>::iterator loopAddEnd = loopAddOpcodes.end();
-    std::map<int,int>::iterator loopAddBegin;
+    auto loopAddEnd = loopAddOpcodes.end();
     std::stack<int> loopStack;
 
     Instruction instr;
@@ -482,7 +475,6 @@ void Interpreter::optimizeLoops()
 
             case OPeditVal:
 
-
                 //Dont care about counter variable
                 if(relativePointer != 0)
                 {
@@ -507,7 +499,7 @@ void Interpreter::optimizeLoops()
                 relativePointer = 0;
 
 
-                for(loopAddBegin = loopAddOpcodes.begin(); loopAddBegin != loopAddEnd ; ++loopAddBegin)
+                for(const auto &iter : loopAddOpcodes)
                 {
 
                     /*
@@ -518,12 +510,12 @@ void Interpreter::optimizeLoops()
 
                     */
 
-                    if(loopAddBegin->second != 0)
+                    if(iter.second != 0)
                     {
 
                         instr.opcode = OPloopAdd;
-                        instr.parameter = loopAddBegin->first;
-                        instr.parameter2 = loopAddBegin->second;
+                        instr.parameter = iter.first;
+                        instr.parameter2 = iter.second;
                         optimizedCode.push_back(instr);
                     }
 
@@ -549,7 +541,7 @@ void Interpreter::optimizeLoops()
 
     }
 
-    mCode = optimizedCode;
+    mCode = std::move(optimizedCode);
 
 }
 
@@ -571,6 +563,7 @@ void Interpreter::stripMovePtr()
 
     std::vector<Instruction> optimizedCode;
     std::stack<int> loopStack;
+    Instruction instr;
 
 
     for(int i = 0; i < codeSize; ++i)
@@ -588,24 +581,25 @@ void Interpreter::stripMovePtr()
 
             default:
 
-                mCode[i].parameter3 = movePtrVal;
+                instr = mCode[i];
+                instr.parameter3 = movePtrVal;
                 movePtrVal = 0;
 
 
-                switch(mCode[i].opcode)
+                switch(instr.opcode)
                 {
 
                     case OPjumpOnZero:
 
-                        optimizedCode.push_back(mCode[i]);
+                        optimizedCode.push_back(instr);
                         loopStack.push(optimizedCode.size() - 1);
 
                         break;
 
                     case OPjumpOnNonZero:
 
-                        mCode[i].parameter = loopStack.top();
-                        optimizedCode.push_back(mCode[i]);
+                        instr.parameter = loopStack.top();
+                        optimizedCode.push_back(instr);
                         optimizedCode[loopStack.top()].parameter = optimizedCode.size() - 1;
                         loopStack.pop();
 
@@ -613,7 +607,7 @@ void Interpreter::stripMovePtr()
 
                     default:
 
-                        optimizedCode.push_back(mCode[i]);
+                        optimizedCode.push_back(instr);
 
                         break;
                 }
@@ -627,10 +621,10 @@ void Interpreter::stripMovePtr()
 
     }
 
-    dumpCode(optimizedCode,"optimizedCode.txt");
-    dumpCode(mCode,"code.txt");
+    //dumpCode(optimizedCode,"optimizedCode.txt");
+    //dumpCode(mCode,"code.txt");
 
-    mCode = optimizedCode;
+    mCode = std::move(optimizedCode);
 
 
 }

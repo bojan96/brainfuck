@@ -1,26 +1,24 @@
+#include "Interpreter.hpp"
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <cstddef>
 #include <string>
-#include "Interpreter.hpp"
+#include <memory>
+#include <utility>
 
 class Bf
 {
 
 public:
 
-    Bf():mStdin(0),mArraySize(10000),mDebug(false)
+    Bf():mArraySize(10000),mDebug(false)
     {}
-
-    ~Bf()
-    {
-        delete mStdin;
-    }
 
     void run(int argc,char *argv[])
     {
+
         if(parseArgs(argc,argv))
         {
 
@@ -29,7 +27,6 @@ public:
 
         }
 
-
     }
 
 
@@ -37,12 +34,21 @@ private:
 
     bool strToInt(const std::string &str,int &n)
     {
-        std::istringstream stream(str);
-        char ch;
 
-        stream>>n;
+        bool success = true;
 
-        return !(stream.fail() || stream.get(ch));
+        try
+        {
+
+            n = std::stoi(str);
+
+        }
+        catch(...)
+        {
+            success = false;
+        }
+
+        return success;
 
     }
 
@@ -66,23 +72,21 @@ private:
 
         for(int i=0; i<4; ++i)
         {
-            stream<<std::setw(20)<<std::left<<options[i][0]<<options[i][1]<<'\n';
+            stream<<std::setw(20)<<std::left<<options[i][0]<<options[i][1]<<"\n";
         }
 
         stream<<"NOTE: If you specify mutliple options the last one will be used\n";
-
-
 
     }
 
     bool parseArgs(int argc,char *argv[])
     {
 
-        bool useFileInput=false;
+        bool useFileInput = false;
         std::string stdinString;
         std::string stdinFilename;
         int arraySize;
-        bool fileSpecified=false;
+        bool fileSpecified = false;
 
         if(argc < 2)
         {
@@ -91,21 +95,23 @@ private:
         }
 
 
-        for(int i=1; i<argc; ++i)
+        for(int i = 1; i<argc; ++i)
         {
 
 
-            if(argv[i][0]=='-')
+            if(argv[i][0] == '-')
 
                 switch(argv[i][1])
                 {
 
                 case 'i':
 
-                    if(i+1<argc)
+                    if(i+1 < argc)
                     {
+
                         useFileInput=false;
                         stdinString=argv[++i];
+
                     }
                     else
                     {
@@ -117,10 +123,12 @@ private:
 
                 case 'f':
 
-                    if(i+1<argc)
+                    if(i+1 < argc)
                     {
+
                         useFileInput=true;
                         stdinFilename=argv[++i];
+
                     }
                     else
                     {
@@ -137,17 +145,21 @@ private:
 
                 case 's':
 
-                    if(i+1<argc)
+                    if(i+1 < argc)
                     {
-                        if( !strToInt(argv[++i],arraySize) || arraySize<=0)
+
+                        if( !strToInt(argv[++i],arraySize) || arraySize <= 0)
                         {
-                            std::cout<<"Invalid size value: "<<argv[i]<<", last specified value will be used"<<'\n';
+
+                            std::cout<<"Invalid size value: "<<argv[i]<<", last specified value will be used"<<"\n";
 
                         }
                         else
                             mArraySize=arraySize;
+
                     }
                     else
+
                         std::cout<<"Size not specified, last specified size will be used\n";
 
                     break;
@@ -155,6 +167,7 @@ private:
                 case 'h':
 
                     displayHelp(std::cout);
+
                     return false;
 
                     break;
@@ -171,7 +184,7 @@ private:
 
             else if(!fileSpecified)
             {
-                fileSpecified=true;
+                fileSpecified = true;
 
                 mSourceFile.open(argv[i]);
 
@@ -183,10 +196,6 @@ private:
 
             }
 
-
-
-
-
         }
 
 
@@ -196,17 +205,17 @@ private:
 
             if(! file->is_open())
             {
-                std::cerr<<"Could not open the file: "<<stdinFilename<<'\n';
+                std::cerr<<"Could not open the file: "<<stdinFilename<<"\n";
                 return false;
             }
 
-            mStdin=file;
+            mStdin = std::unique_ptr<std::istream> (file);
 
 
         }
         else
         {
-            mStdin=new std::istringstream(stdinString);
+            mStdin = std::unique_ptr<std::istream> (new std::istringstream(stdinString));
         }
 
 
@@ -215,7 +224,7 @@ private:
     }
 
     std::ifstream mSourceFile;
-    std::istream *mStdin;
+    std::unique_ptr<std::istream> mStdin;
     std::size_t mArraySize;
     bool mDebug;
 
