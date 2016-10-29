@@ -331,7 +331,7 @@ void Interpreter::executeCode(std::istream &stdInput)
             if(!cellArray[dataPtr])
                 toExecute = &code[toExecute->parameter];
 
-                break;
+            break;
 
         case OPjumpOnNonZero:
 
@@ -404,7 +404,6 @@ void Interpreter::init(std::size_t arraySize)
 {
 
     mCellArray = std::vector<CellType>(arraySize);
-    std::fill(mCellArray.begin(),mCellArray.end(),0);
 
 }
 
