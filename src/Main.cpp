@@ -58,24 +58,22 @@ private:
 
         const std::string options[][2]=
         {
+
             { "-i <input>","Specifiy input"},
             { "-f <filename>", "Specifiy file as input"},
             { "-d","Enable debug mode"},
             { "-s","Specify array size"}
 
-
         };
 
 
-        stream<<"Usage: bf filename [options]\n";
-        stream<<"options: \n";
+        stream << "Usage: bf filename [options]\n";
+        stream << "options: \n";
 
-        for(int i=0; i<4; ++i)
-        {
-            stream<<std::setw(20)<<std::left<<options[i][0]<<options[i][1]<<"\n";
-        }
+        for(const auto &option : options)
+            stream << std::setw(20) << std::left << option[0] << option[1]<<"\n";
 
-        stream<<"NOTE: If you specify mutliple options the last one will be used\n";
+        stream << "NOTE: If you specify mutliple options the last one will be used\n";
 
     }
 
@@ -90,14 +88,15 @@ private:
 
         if(argc < 2)
         {
+
             displayHelp(std::cerr);
             return false;
+
         }
 
 
-        for(int i = 1; i<argc; ++i)
+        for(int i = 1; i < argc; ++i)
         {
-
 
             if(argv[i][0] == '-')
 
@@ -109,15 +108,12 @@ private:
                     if(i+1 < argc)
                     {
 
-                        useFileInput=false;
-                        stdinString=argv[++i];
+                        useFileInput = false;
+                        stdinString = argv[++i];
 
                     }
                     else
-                    {
                         std::cout<<"Input not specified, last specified input will be used\n";
-                    }
-
 
                     break;
 
@@ -126,20 +122,18 @@ private:
                     if(i+1 < argc)
                     {
 
-                        useFileInput=true;
-                        stdinFilename=argv[++i];
+                        useFileInput = true;
+                        stdinFilename = argv[++i];
 
                     }
                     else
-                    {
                         std::cout<<"Filename for input not specified, last specified input will be used\n";
-                    }
 
                     break;
 
                 case 'd':
 
-                    mDebug=true;
+                    mDebug = true;
 
                     break;
 
@@ -149,18 +143,15 @@ private:
                     {
 
                         if( !strToInt(argv[++i],arraySize) || arraySize <= 0)
-                        {
+                            std::cout << "Invalid size value: " << argv[i]
+                            << ", last specified value will be used\n";
 
-                            std::cout<<"Invalid size value: "<<argv[i]<<", last specified value will be used"<<"\n";
-
-                        }
                         else
-                            mArraySize=arraySize;
+                            mArraySize = arraySize;
 
                     }
                     else
-
-                        std::cout<<"Size not specified, last specified size will be used\n";
+                        std::cout << "Size not specified, last specified size will be used\n";
 
                     break;
 
@@ -174,7 +165,7 @@ private:
 
                 default:
 
-                    std::cerr<<"Invalid option: "<<argv[i];
+                    std::cerr << "Invalid option: " << argv[i];
                     return false;
 
                     break;
@@ -184,14 +175,16 @@ private:
 
             else if(!fileSpecified)
             {
-                fileSpecified = true;
 
+                fileSpecified = true;
                 mSourceFile.open(argv[i]);
 
                 if(! mSourceFile.is_open())
                 {
-                    std::cerr<<"Could not open the file: "<<argv[i];
+
+                    std::cerr << "Could not open the file: " << argv[i];
                     return false;
+
                 }
 
             }
@@ -201,24 +194,22 @@ private:
 
         if(useFileInput)
         {
-            std::ifstream *file=new std::ifstream(stdinFilename.c_str());
 
-            if(! file->is_open())
+            std::unique_ptr<std::ifstream> stdin(new std::ifstream(stdinFilename));
+
+            if(! stdin->is_open())
             {
-                std::cerr<<"Could not open the file: "<<stdinFilename<<"\n";
+
+                std::cerr << "Could not open the file: " << stdinFilename << "\n";
                 return false;
+
             }
 
-            mStdin = std::unique_ptr<std::istream> (file);
-
+            mStdin = std::move(stdin);
 
         }
         else
-        {
             mStdin = std::unique_ptr<std::istream> (new std::istringstream(stdinString));
-        }
-
-
 
         return true;
     }
@@ -235,8 +226,19 @@ private:
 int main(int argc,char *argv[])
 {
 
-    Bf bf;
-    bf.run(argc,argv);
+    try
+    {
+
+        Bf bf;
+        bf.run(argc,argv);
+
+    }
+    catch(const std::exception &ex)
+    {
+
+        std::cerr << "\nError: " << ex.what();
+
+    }
 
     return 0;
 }

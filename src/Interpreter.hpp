@@ -1,11 +1,11 @@
 #ifndef INTERPRETER_HPP
 #define INTERPRETER_HPP
 
-
 #include <vector>
 #include <set>
 #include <string>
 #include <cstddef>
+#include <cstdint>
 
 class Interpreter
 {
@@ -16,21 +16,21 @@ public:
 
 private:
 
-    bool parseFile(std::ifstream &sourceFile,bool debugMode);
+    void parseFile(std::ifstream &sourceFile,bool debugMode);
     void executeCode(std::istream &stdInput);
     void init(std::size_t arraySize);
     void optimizeLoops();
     void performOptimizations();
     void stripMovePtr();
 
-
     enum Opcode
     {
-        OPeditVal,
-        OPmovePtr,
-        OPjumpOnZero,
-        OPjumpOnNonZero,
-        OPloopAdd,
+
+        OPeditVal, // parameter1 - offset
+        OPmovePtr, // parameter1 - offset
+        OPjumpOnZero, // parameter1 - index of next instr on branch
+        OPjumpOnNonZero, // parameter1 - index of next inst on branch
+        OPloopAdd, // parameter1 - relative offset, parameter2 - increment
         OPsetZero,
         OPprint,
         OPread,
@@ -43,15 +43,11 @@ private:
     {
 
         Opcode opcode;
-
-        // OPeditVal, OPmovePtr, OPjumpOnZero, OPjumpOnNonZero,OPdebug
-        int parameter;
-
-        // OPloopAdd
-        int parameter2;
+        int32_t parameter;
+        int32_t parameter2;
 
         // Avoid decoding OPmovePtr
-        int parameter3;
+        int32_t parameter3;
 
         Instruction():parameter3(0){}
 
@@ -59,13 +55,11 @@ private:
 
     void dumpCode(const std::vector<Instruction> &code,const std::string &filename);
 
-
     typedef unsigned int CellType;
 
     std::vector<Instruction> mCode;
     std::vector<CellType> mCellArray;
     std::set<int> mLoopsToOptimize;
-
 
 };
 
