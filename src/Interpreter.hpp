@@ -30,7 +30,7 @@ private:
         OPmovePtr, // parameter1 - offset
         OPjumpOnZero, // parameter1 - index of next instr on branch
         OPjumpOnNonZero, // parameter1 - index of next inst on branch
-        OPloopAdd, // parameter1 - relative offset, parameter2 - increment
+        OPmulAdd, // parameter1 - relative offset, parameter2 - increment
         OPsetZero,
         OPprint,
         OPread,

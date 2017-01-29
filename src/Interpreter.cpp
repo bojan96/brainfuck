@@ -55,9 +55,9 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
 
             break;
 
-        case OPloopAdd:
+        case OPmulAdd:
 
-            file << "loopAdd " << code[i].parameter << ", " << code[i].parameter2;
+            file << "mulAdd " << code[i].parameter << ", " << code[i].parameter2;
 
             break;
 
@@ -348,7 +348,7 @@ void Interpreter::executeCode(std::istream &stdInput)
             break;
 
 
-        case OPloopAdd:
+        case OPmulAdd:
 
             /*If statement used to prevent out of range indexing when cellArray[dataPtr] == 0
               and dataPtr + toExecute->parameter < 0 */
@@ -416,7 +416,7 @@ void Interpreter::optimizeLoops()
 {
 
     std::vector<Instruction> optimizedCode;
-    std::map<int,int> loopAddOpcodes;
+    std::map<int,int> mulAddOpcodes;
     std::stack<int> loopStack;
 
     Instruction instr;
@@ -475,7 +475,7 @@ void Interpreter::optimizeLoops()
 
                 //Dont care about counter variable
                 if(relativePointer != 0)
-                   loopAddOpcodes[relativePointer] += mCode[i].parameter;
+                   mulAddOpcodes[relativePointer] += mCode[i].parameter;
 
                 break;
 
@@ -495,20 +495,20 @@ void Interpreter::optimizeLoops()
                     Map stores elements in asscending ordered
                     Based on that, this code [<->-<<+>>] is optimized to
 
-                    loopAdd -2, 1, 0
-                    loopAdd -1, -1, 0
+                    mulAdd -2, 1, 0
+                    mulAdd -1, -1, 0
                     setZero
 
                     Order does not affect code equivalence
 
                 */
-                for(const auto &iter : loopAddOpcodes)
+                for(const auto &iter : mulAddOpcodes)
                 {
 
                     if(iter.second != 0)
                     {
 
-                        instr.opcode = OPloopAdd;
+                        instr.opcode = OPmulAdd;
                         instr.parameter = iter.first;
                         instr.parameter2 = iter.second;
                         optimizedCode.push_back(instr);
@@ -517,7 +517,7 @@ void Interpreter::optimizeLoops()
 
                 }
 
-                loopAddOpcodes.clear();
+                mulAddOpcodes.clear();
                 instr.opcode = OPsetZero;
                 optimizedCode.push_back(instr);
 
