@@ -31,6 +31,7 @@ private:
         OPjumpOnZero, // parameter1 - index of next instr on branch
         OPjumpOnNonZero, // parameter1 - index of next inst on branch
         OPmulAdd, // parameter1 - relative offset, parameter2 - increment
+        OPmulAddZero,
         OPsetZero,
         OPprint,
         OPread,

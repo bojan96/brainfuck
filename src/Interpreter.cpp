@@ -61,6 +61,12 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
 
             break;
 
+        case OPmulAddZero:
+
+            file << "mulAddZero " << code[i].parameter << ", " << code[i].parameter2;
+
+            break;
+
         case OPsetZero:
 
             file << "setZero";
@@ -146,7 +152,7 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
         if(ch == std::ifstream::traits_type::eof())
             break;
 
-        switch( static_cast<char>(ch) )
+        switch(static_cast<char>(ch))
         {
 
         case '+':
@@ -316,6 +322,9 @@ void Interpreter::executeCode(std::istream &stdInput)
     while(true)
     {
 
+        assert(dataPtr >= 0);
+        assert(dataPtr < mCellArray.size());
+
         dataPtr += toExecute->parameter3;
 
         switch(toExecute->opcode)
@@ -335,12 +344,18 @@ void Interpreter::executeCode(std::istream &stdInput)
 
         case OPjumpOnZero:
 
+            assert(toExecute->parameter >= 0);
+            assert(static_cast<std::size_t>(toExecute->parameter) < mCellArray.size());
+
             if(!cellArray[dataPtr])
                 toExecute = &code[toExecute->parameter];
 
             break;
 
         case OPjumpOnNonZero:
+
+            assert(toExecute->parameter >= 0);
+            assert(static_cast<std::size_t>(toExecute->parameter) < mCellArray.size());
 
             if(cellArray[dataPtr])
                 toExecute = &code[toExecute->parameter];
@@ -354,6 +369,15 @@ void Interpreter::executeCode(std::istream &stdInput)
               and dataPtr + toExecute->parameter < 0 */
             if(cellArray[dataPtr])
                 cellArray[dataPtr + toExecute->parameter] += cellArray[dataPtr] * toExecute->parameter2;
+
+            break;
+
+        case OPmulAddZero:
+
+            if(cellArray[dataPtr])
+                cellArray[dataPtr + toExecute->parameter] += cellArray[dataPtr] * toExecute->parameter2;
+
+            cellArray[dataPtr] = 0;
 
             break;
 
@@ -423,7 +447,6 @@ void Interpreter::optimizeLoops()
     int relativePointer = 0;
     bool scanLoop = false;
 
-    optimizedCode.reserve(mCode.size());
 
     for(std::size_t i = 0; i < mCode.size(); ++i)
     {
@@ -496,30 +519,44 @@ void Interpreter::optimizeLoops()
                     Based on that, this code [<->-<<+>>] is optimized to
 
                     mulAdd -2, 1, 0
-                    mulAdd -1, -1, 0
-                    setZero
+                    mulAddZero -1, -1, 0
 
                     Order does not affect code equivalence
 
                 */
-                for(const auto &iter : mulAddOpcodes)
-                {
 
-                    if(iter.second != 0)
+                if(mulAddOpcodes.size())
+                    for(auto iter = mulAddOpcodes.cbegin(); iter != mulAddOpcodes.cend(); ++iter)
                     {
 
-                        instr.opcode = OPmulAdd;
-                        instr.parameter = iter.first;
-                        instr.parameter2 = iter.second;
-                        optimizedCode.push_back(instr);
+                        //Skip any instructions with zero increment
+                        if(iter->second != 0)
+                        {
+
+                            instr.parameter = iter->first;
+                            instr.parameter2 = iter->second;
+
+                            if(iter != --mulAddOpcodes.cend())
+                                instr.opcode = OPmulAdd;
+
+                            else
+                                instr.opcode = OPmulAddZero;
+
+                            optimizedCode.push_back(instr);
+
+                        }
 
                     }
+
+                else
+                {
+
+                    instr.opcode = OPsetZero;
+                    optimizedCode.push_back(instr);
 
                 }
 
                 mulAddOpcodes.clear();
-                instr.opcode = OPsetZero;
-                optimizedCode.push_back(instr);
 
                 break;
 
