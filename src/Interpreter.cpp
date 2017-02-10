@@ -317,7 +317,7 @@ void Interpreter::executeCode(std::istream &stdInput)
     Instruction *toExecute = code;
 
     CellType *cellArray = &mCellArray.front();
-    uint32_t dataPtr = 0;
+    std::uint32_t dataPtr = 0;
 
     while(true)
     {

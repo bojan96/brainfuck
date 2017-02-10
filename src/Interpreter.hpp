@@ -44,11 +44,11 @@ private:
     {
 
         Opcode opcode;
-        int32_t parameter;
-        int32_t parameter2;
+        std::int32_t parameter;
+        std::int32_t parameter2;
 
         // Avoid decoding OPmovePtr
-        int32_t parameter3;
+        std::int32_t parameter3;
 
         Instruction():parameter3(0){}
 
