@@ -7,19 +7,25 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <stdexcept>
 
 class Bf
 {
 
 public:
 
-    Bf():mArraySize(10000),mDebug(false)
+    Bf():mArraySize(10000),mDebug(false),mHelp(false)
     {}
 
     void run(int argc,char *argv[])
     {
 
-        if(parseArgs(argc,argv))
+        parseArgs(argc,argv);
+
+        if(mHelp)
+            displayHelp();
+
+        else
         {
 
             Interpreter interpreter;
@@ -53,7 +59,7 @@ private:
     }
 
 
-    void displayHelp(std::ostream &stream)
+    void displayHelp()
     {
 
         const std::string options[][2]=
@@ -67,17 +73,17 @@ private:
         };
 
 
-        stream << "Usage: bf filename [options]\n";
-        stream << "options: \n";
+        std::cout << "Usage: bf filename [options]\n";
+        std::cout << "options: \n";
 
         for(const auto &option : options)
-            stream << std::setw(20) << std::left << option[0] << option[1]<<"\n";
+            std::cout << std::setw(20) << std::left << option[0] << option[1]<<"\n";
 
-        stream << "NOTE: If you specify mutliple options the last one will be used\n";
+        std::cout << "NOTE: If you specify mutliple options the last one will be used\n";
 
     }
 
-    bool parseArgs(int argc,char *argv[])
+    void parseArgs(int argc,char *argv[])
     {
 
         bool useFileInput = false;
@@ -87,25 +93,18 @@ private:
         bool fileSpecified = false;
 
         if(argc < 2)
-        {
-
-            displayHelp(std::cerr);
-            return false;
-
-        }
-
+            throw std::runtime_error("No input file specified");
 
         for(int i = 1; i < argc; ++i)
         {
 
             if(argv[i][0] == '-')
-
                 switch(argv[i][1])
                 {
 
                 case 'i':
 
-                    if(i+1 < argc)
+                    if(i + 1 < argc)
                     {
 
                         useFileInput = false;
@@ -113,13 +112,13 @@ private:
 
                     }
                     else
-                        std::cout<<"Input not specified, last specified input will be used\n";
+                        throw std::runtime_error("Missing input after '-i'");
 
                     break;
 
                 case 'f':
 
-                    if(i+1 < argc)
+                    if(i + 1 < argc)
                     {
 
                         useFileInput = true;
@@ -127,7 +126,7 @@ private:
 
                     }
                     else
-                        std::cout<<"Filename for input not specified, last specified input will be used\n";
+                        throw std::runtime_error("Missing filename after '-f'");
 
                     break;
 
@@ -139,71 +138,60 @@ private:
 
                 case 's':
 
-                    if(i+1 < argc)
+                    if(i + 1 < argc)
                     {
 
-                        if( !strToInt(argv[++i],arraySize) || arraySize <= 0)
-                            std::cout << "Invalid size value: " << argv[i]
-                            << ", last specified value will be used\n";
+                        if(!strToInt(argv[++i],arraySize) || arraySize <= 0)
+                            throw std::runtime_error(std::string("Invalid size ") + argv[i]);
 
                         else
                             mArraySize = arraySize;
 
                     }
                     else
-                        std::cout << "Size not specified, last specified size will be used\n";
+                        throw std::runtime_error("Missing size after '-s'");
 
                     break;
 
                 case 'h':
 
-                    displayHelp(std::cout);
-
-                    return false;
+                    mHelp = true;
+                    // User wants to see help text
+                    return;
 
                     break;
 
                 default:
 
-                    std::cerr << "Invalid option: " << argv[i];
-                    return false;
+                    throw std::runtime_error(std::string("Invalid option ") + argv[i]);
 
                     break;
 
-
                 }
 
-            else if(!fileSpecified)
+            else
             {
 
                 fileSpecified = true;
                 mSourceFile.open(argv[i]);
 
-                if(! mSourceFile.is_open())
-                {
-
-                    std::cerr << "Could not open the file: " << argv[i];
-                    return false;
-
-                }
+                if(!mSourceFile.is_open())
+                    throw std::runtime_error(std::string("Could not open the file: ") + argv[i]);
 
             }
 
         }
 
+        if(!fileSpecified)
+            throw std::runtime_error("No input file specified");
 
         if(useFileInput)
         {
 
             std::unique_ptr<std::ifstream> stdin(new std::ifstream(stdinFilename));
 
-            if(! stdin->is_open())
-            {
-
-                std::cerr << "Could not open the file: " << stdinFilename << "\n";
-                return false;
-
-            }
+            if(!stdin->is_open())
+                throw std::runtime_error(std::string("Could not open the file: ") + stdinFilename);
 
             mStdin = std::move(stdin);
 
@@ -211,14 +199,13 @@ private:
         else
             mStdin = std::unique_ptr<std::istream> (new std::istringstream(stdinString));
 
-        return true;
     }
 
     std::ifstream mSourceFile;
     std::unique_ptr<std::istream> mStdin;
     std::size_t mArraySize;
     bool mDebug;
-
+    bool mHelp;
 
 };
 
@@ -236,7 +223,7 @@ int main(int argc,char *argv[])
     catch(const std::exception &ex)
     {
 
-        std::cerr << "\nError: " << ex.what();
+        std::cerr << "Error: " << ex.what();
 
     }
 
