@@ -23,6 +23,7 @@ private:
     void performOptimizations();
     void stripMovePtr();
     void stripEditVal();
+    void findZeroOptimize();
 
     enum Opcode
     {
@@ -34,6 +35,7 @@ private:
         OPmulAdd, // parameter1 - relative offset, parameter2 - increment
         OPmulAddZero,
         OPsetZero,
+        OPfindZero,
         OPprint,
         OPread,
         OPdebug,

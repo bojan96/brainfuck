@@ -73,6 +73,12 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
 
             break;
 
+        case OPfindZero:
+
+            file << "findZero " << code[i].parameter;
+
+            break;
+
         case OPprint:
 
             file << "print";
@@ -391,7 +397,18 @@ void Interpreter::executeCode(std::istream &stdInput)
 
         case OPsetZero:
 
+            cellArray[dataPtr] += toExecute->parameter4;
+
             cellArray[dataPtr] = 0;
+
+            break;
+
+        case OPfindZero:
+
+            cellArray[dataPtr] += toExecute->parameter4;
+
+            while(cellArray[dataPtr])
+                dataPtr += toExecute->parameter;
 
             break;
 
@@ -603,6 +620,7 @@ void Interpreter::performOptimizations()
 {
 
     optimizeLoops();
+    findZeroOptimize();
     stripEditVal();
     stripMovePtr();
 
@@ -672,7 +690,7 @@ void Interpreter::stripMovePtr()
 
     #if !defined(NDEBUG)
 
-    dumpCode(mCode,"OL3.txt");
+    dumpCode(mCode,"OL4.txt");
 
     #endif
 
@@ -730,6 +748,75 @@ void Interpreter::stripEditVal()
             optimizedCode.push_back(currentInstr);
 
     }
+
+    mCode = std::move(optimizedCode);
+
+    #if !defined(NDEBUG)
+
+    dumpCode(mCode,"OL3.txt");
+
+    #endif
+
+}
+
+void Interpreter::findZeroOptimize()
+{
+
+    std::vector<Instruction> optimizedCode;
+    std::stack<int> loopStack;
+
+    for(auto currentInstr : mCode)
+    {
+
+        switch(currentInstr.opcode)
+        {
+
+        case OPjumpOnZero:
+
+            optimizedCode.push_back(currentInstr);
+            loopStack.push(optimizedCode.size() - 1);
+
+            break;
+
+        case OPjumpOnNonZero:
+
+            // Last two instruction jumpOnZero and movePtr
+            if(optimizedCode.back().opcode == OPmovePtr
+               && static_cast<std::size_t>(loopStack.top()) == optimizedCode.size() - 2)
+            {
+
+                Instruction instr;
+                instr.opcode = OPfindZero;
+                instr.parameter = optimizedCode.back().parameter;
+
+                // Delete movePtr and jumpOnZero and insert findZero instr
+                optimizedCode.resize(optimizedCode.size() - 2);
+                optimizedCode.push_back(instr);
+
+            }
+            else
+            {
+
+                currentInstr.parameter = loopStack.top();
+                optimizedCode.push_back(currentInstr);
+                optimizedCode[loopStack.top()].parameter = optimizedCode.size() - 1;
+
+            }
+
+            loopStack.pop();
+
+            break;
+
+        default:
+
+            optimizedCode.push_back(currentInstr);
+
+            break;
+
+        }
+
+    }
+
 
     mCode = std::move(optimizedCode);
 
