@@ -22,6 +22,7 @@ private:
     void optimizeLoops();
     void performOptimizations();
     void stripMovePtr();
+    void stripEditVal();
 
     enum Opcode
     {
@@ -49,14 +50,16 @@ private:
 
         // Avoid decoding OPmovePtr
         std::int32_t parameter3;
+        // Avoid decoding OPeditVal
+        std::int32_t parameter4;
 
-        Instruction():parameter3(0){}
+        Instruction():parameter(0),parameter2(0),parameter3(0),parameter4(0){}
 
     };
 
     void dumpCode(const std::vector<Instruction> &code,const std::string &filename);
 
-    typedef unsigned int CellType;
+    typedef std::uint32_t CellType;
 
     std::vector<Instruction> mCode;
     std::vector<CellType> mCellArray;
