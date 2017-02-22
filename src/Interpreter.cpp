@@ -712,13 +712,18 @@ void Interpreter::stripEditVal()
         if(op != OPmovePtr && op != OPeditVal)
         {
 
-            lastInstr = optimizedCode.back();
-
-            if(lastInstr.opcode == OPeditVal)
+            if(optimizedCode.size())
             {
 
-                optimizedCode.resize(optimizedCode.size() - 1);
-                currentInstr.parameter4 = lastInstr.parameter;
+                lastInstr = optimizedCode.back();
+
+                if(lastInstr.opcode == OPeditVal)
+                {
+
+                    optimizedCode.resize(optimizedCode.size() - 1);
+                    currentInstr.parameter4 = lastInstr.parameter;
+
+                }
 
             }
 
