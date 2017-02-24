@@ -57,6 +57,12 @@ private:
 
         Instruction():parameter(0),parameter2(0),parameter3(0),parameter4(0){}
 
+        Instruction(Opcode op,std::int32_t parameter)
+                    :opcode(op),parameter(parameter),parameter2(0),parameter3(0),
+                    parameter4(0){}
+
+        explicit Instruction(Opcode op):opcode(op),parameter(0),parameter2(0),parameter3(0),parameter4(0){}
+
     };
 
     void dumpCode(const std::vector<Instruction> &code,const std::string &filename);

@@ -16,54 +16,62 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
     std::ofstream file(filename.c_str());
     assert(file.is_open());
 
-    file << "Size: " << code.size() << "\n";
-    file << "Instructions:\n";
+    const int addressW = 12;
+    const int opcodeW = 15;
+    const int pW = 8;
 
+    file << "Size: " << code.size() << "\n\n";
+    file << std::setw(addressW) << std::left << "address" << std::setw(opcodeW) << "opcode" << std::right
+         << std::setw(pW) << "p1" << std::setw(pW) << "p2" << std::setw(pW) << "p3" << std::setw(pW) << "p4";
+
+    file << "\n";
 
     for(std::size_t i = 0; i < code.size(); i++)
     {
 
-        file << "0x" << std::setw(8) << std::setfill('0') << std::hex << std::uppercase << i << ": ";
-        file << std::dec;
+        Instruction instr = code[i];
 
-        switch(code[i].opcode)
+        file << "0x" << std::right << std::setw(8) << std::setfill('0')
+             << std::hex << std::uppercase << i << ": ";
+
+        file << std::dec << std::left << std::setw(opcodeW) << std::setfill(' ');
+
+        switch(instr.opcode)
         {
 
         case OPeditVal:
 
-            file << "editVal " << code[i].parameter;
+            file << "editVal";
 
             break;
 
         case OPmovePtr:
 
-            file << "movePtr " << code[i].parameter;
+            file << "movePtr";
 
             break;
 
         case OPjumpOnZero:
 
-            file << std::hex;
-            file << "jumpOnZero 0x" << code[i].parameter;
+            file << "jumpOnZero";
 
             break;
 
         case OPjumpOnNonZero:
 
-            file << std::hex;
-            file << "jumpOnNonZero 0x" << code[i].parameter;
+            file << "jumpOnNonZero";
 
             break;
 
         case OPmulAdd:
 
-            file << "mulAdd " << code[i].parameter << ", " << code[i].parameter2;
+            file << "mulAdd";
 
             break;
 
         case OPmulAddZero:
 
-            file << "mulAddZero " << code[i].parameter << ", " << code[i].parameter2;
+            file << "mulAddZero";
 
             break;
 
@@ -75,7 +83,7 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
 
         case OPfindZero:
 
-            file << "findZero " << code[i].parameter;
+            file << "findZero";
 
             break;
 
@@ -105,8 +113,13 @@ void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::strin
 
         }
 
-        file << std::dec;
-        file << ", " << code[i].parameter3 << ", " << code[i].parameter4 << "\n";
+        Opcode op = instr.opcode;
+
+        if(op == OPjumpOnZero || op == OPjumpOnNonZero)
+            file << std::hex;
+
+        file << std::right << std::setw(pW) << instr.parameter << std::dec << std::setw(pW) << instr.parameter2
+             << std::setw(pW) << instr.parameter3 << std::setw(pW) << instr.parameter4 << "\n";
 
     }
 
@@ -141,7 +154,6 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
     int ch;
     std::size_t codePos = 0;
-    Instruction instr;
     std::stack<int> loopStack;
 
     //Variables related to loop optimizations
@@ -164,13 +176,8 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
         case '+':
 
             if(mCode.empty() || mCode.back().opcode != OPeditVal)
-            {
+                mCode.push_back({OPeditVal,1});
 
-                instr.opcode = OPeditVal;
-                instr.parameter = 1;
-                mCode.push_back(instr);
-
-            }
             else if( ++mCode.back().parameter == 0)
                 mCode.pop_back();
 
@@ -182,13 +189,8 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
         case '-':
 
             if(mCode.empty() || mCode.back().opcode != OPeditVal )
-            {
+                mCode.push_back({OPeditVal,-1});
 
-                instr.opcode = OPeditVal;
-                instr.parameter = -1;
-                mCode.push_back(instr);
-
-            }
             else if( --mCode.back().parameter == 0)
                 mCode.pop_back();
 
@@ -200,13 +202,8 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
         case '>':
 
             if(mCode.empty() || mCode.back().opcode != OPmovePtr)
-            {
+                mCode.push_back({OPmovePtr,1});
 
-                instr.opcode = OPmovePtr;
-                instr.parameter = 1;
-                mCode.push_back(instr);
-
-            }
             else if( ++mCode.back().parameter == 0)
                 mCode.pop_back();
 
@@ -218,13 +215,8 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
         case '<':
 
             if(mCode.empty() || mCode.back().opcode != OPmovePtr)
-            {
+                mCode.push_back({OPmovePtr,-1});
 
-                instr.opcode = OPmovePtr;
-                instr.parameter = -1;
-                mCode.push_back(instr);
-
-            }
             else if ( --mCode.back().parameter == 0)
                 mCode.pop_back();
 
@@ -235,8 +227,7 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
         case '[':
 
-            instr.opcode = OPjumpOnZero;
-            mCode.push_back(instr);
+            mCode.push_back(Instruction(OPjumpOnZero));
             loopStack.push(mCode.size() - 1);
 
             //Loop optimzation related code
@@ -257,9 +248,7 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
                 if(!recentPop && loopCounter == -1 && relativePointer == 0 && !hasPrintRead)
                     mLoopsToOptimize.insert(loopStack.top());
 
-                instr.opcode = OPjumpOnNonZero;
-                instr.parameter = loopStack.top();
-                mCode.push_back(instr);
+                mCode.push_back({OPjumpOnNonZero,loopStack.top()});
                 mCode[loopStack.top()].parameter = mCode.size() - 1;
                 loopStack.pop();
                 recentPop = true;
@@ -271,16 +260,14 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
         case '.':
 
-            instr.opcode = OPprint;
-            mCode.push_back(instr);
+            mCode.push_back(Instruction(OPprint));
             hasPrintRead = true;
 
             break;
 
         case ',':
 
-            instr.opcode = OPread;
-            mCode.push_back(instr);
+            mCode.push_back(Instruction(OPread));
             hasPrintRead = true;
 
             break;
@@ -288,13 +275,7 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
         case '#':
 
             if(debugMode)
-            {
-
-                instr.opcode = OPdebug;
-                instr.parameter = codePos;
-                mCode.push_back(instr);
-
-            }
+                mCode.push_back({OPdebug,static_cast<std::int32_t>(codePos)});
 
             break;
 
@@ -309,8 +290,7 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
     if(!loopStack.empty())
         throw std::runtime_error("Unbalanced brackets");
 
-    instr.opcode = OPend;
-    mCode.push_back(instr);
+    mCode.push_back(Instruction(OPend));
 
 }
 
@@ -633,9 +613,8 @@ void Interpreter::stripMovePtr()
     int movePtrVal = 0;
     std::vector<Instruction> optimizedCode;
     std::stack<int> loopStack;
-    Instruction instr;
 
-    for(const auto &currentInstr : mCode)
+    for(auto currentInstr : mCode)
     {
 
         switch(currentInstr.opcode)
@@ -649,24 +628,24 @@ void Interpreter::stripMovePtr()
 
             default:
 
-                instr = currentInstr;
-                instr.parameter3 = movePtrVal;
+
+                currentInstr.parameter3 = movePtrVal;
                 movePtrVal = 0;
 
-                switch(instr.opcode)
+                switch(currentInstr.opcode)
                 {
 
                     case OPjumpOnZero:
 
-                        optimizedCode.push_back(instr);
+                        optimizedCode.push_back(currentInstr);
                         loopStack.push(optimizedCode.size() - 1);
 
                         break;
 
                     case OPjumpOnNonZero:
 
-                        instr.parameter = loopStack.top();
-                        optimizedCode.push_back(instr);
+                        currentInstr.parameter = loopStack.top();
+                        optimizedCode.push_back(currentInstr);
                         optimizedCode[loopStack.top()].parameter = optimizedCode.size() - 1;
                         loopStack.pop();
 
@@ -674,7 +653,7 @@ void Interpreter::stripMovePtr()
 
                     default:
 
-                        optimizedCode.push_back(instr);
+                        optimizedCode.push_back(currentInstr);
 
                         break;
 
