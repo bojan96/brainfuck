@@ -377,8 +377,6 @@ void Interpreter::executeCode(std::istream &stdInput)
 
         case OPsetZero:
 
-            cellArray[dataPtr] += toExecute->parameter4;
-
             cellArray[dataPtr] = 0;
 
             break;
