@@ -65,8 +65,8 @@ private:
         const std::string options[][2]=
         {
 
-            { "-i <input>","Specifiy input"},
-            { "-f <filename>", "Specifiy file as input"},
+            { "-i <input>","Specify input"},
+            { "-f <filename>", "Specify file as input"},
             { "-d","Enable debug mode"},
             { "-s","Specify array size"}
 
@@ -79,7 +79,7 @@ private:
         for(const auto &option : options)
             std::cout << std::setw(20) << std::left << option[0] << option[1]<<"\n";
 
-        std::cout << "NOTE: If you specify mutliple options the last one will be used\n";
+        std::cout << "NOTE: If you specify multiple options the last one will be used\n";
 
     }
 
@@ -98,7 +98,7 @@ private:
         for(int i = 1; i < argc; ++i)
         {
 
-            if(argv[i][0] == '-')
+            if(argv[i][0] == '-' && argv[i][2] == '\0')
                 switch(argv[i][1])
                 {
 
@@ -226,6 +226,8 @@ int main(int argc,char *argv[])
         std::cerr << "Error: " << ex.what();
 
     }
+
+    std::cout << "\n";
 
     return 0;
 }

@@ -10,7 +10,7 @@
 
 #if !defined(NDEBUG)
 
-void Interpreter::dumpCode(const std::vector<Instruction> &code,const std::string &filename)
+void Interpreter::dumpCode(const Code &code,const std::string &filename)
 {
 
     std::ofstream file(filename.c_str());
@@ -152,9 +152,8 @@ Except parsing this function does:
 void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 {
 
-    int ch;
-    std::size_t codePos = 0;
-    std::stack<int> loopStack;
+    std::int32_t codePos = 0;
+    LoopStack loopStack;
 
     //Variables related to loop optimizations
     int relativePointer = 0;
@@ -165,63 +164,39 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
     while(true)
     {
 
-        ch = sourceFile.get();
+    	int nextChar = sourceFile.get();
 
-        if(ch == std::ifstream::traits_type::eof())
+        if(nextChar == std::ifstream::traits_type::eof())
             break;
 
-        switch(static_cast<char>(ch))
+        char ch = static_cast<char>(nextChar);
+
+        switch(ch)
         {
 
         case '+':
-
-            if(mCode.empty() || mCode.back().opcode != OPeditVal)
-                mCode.push_back({OPeditVal,1});
-
-            else if( ++mCode.back().parameter == 0)
-                mCode.pop_back();
-
-            //Loop optimization related code
-            loopCounter += relativePointer == 0;
-
-            break;
-
         case '-':
-
-            if(mCode.empty() || mCode.back().opcode != OPeditVal )
-                mCode.push_back({OPeditVal,-1});
-
-            else if( --mCode.back().parameter == 0)
-                mCode.pop_back();
-
-            //Loop optimization related code
-            loopCounter -= relativePointer == 0;
-
-            break;
-
         case '>':
-
-            if(mCode.empty() || mCode.back().opcode != OPmovePtr)
-                mCode.push_back({OPmovePtr,1});
-
-            else if( ++mCode.back().parameter == 0)
-                mCode.pop_back();
-
-            //Loop optimization related code
-            ++relativePointer;
-
-            break;
-
         case '<':
 
-            if(mCode.empty() || mCode.back().opcode != OPmovePtr)
-                mCode.push_back({OPmovePtr,-1});
+            {
 
-            else if ( --mCode.back().parameter == 0)
-                mCode.pop_back();
+                int increment = (ch == '+' || ch == '>') ? 1 : -1;
+                Opcode op = (ch == '+' || ch == '-') ? OPeditVal : OPmovePtr;
 
-            //Loop optimization related code
-            --relativePointer;
+                if(op == OPeditVal)
+                    loopCounter += increment * (relativePointer == 0);
+
+                else
+                    relativePointer += increment;
+
+                if(mCode.empty() || mCode.back().opcode != op)
+                    mCode.push_back({op,increment});
+
+                else if((mCode.back().parameter += increment) == 0)
+                    mCode.pop_back();
+
+            }
 
             break;
 
@@ -281,6 +256,7 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 
         default:
             break;
+
         }
 
         ++codePos;
@@ -303,7 +279,7 @@ void Interpreter::executeCode(std::istream &stdInput)
     Instruction *toExecute = code;
 
     CellType *cellArray = &mCellArray.front();
-    std::uint32_t dataPtr = 0;
+    CellType dataPtr = 0;
 
     while(true)
     {
@@ -438,7 +414,7 @@ finish:;
 void Interpreter::init(std::size_t arraySize)
 {
 
-    mCellArray = std::vector<CellType>(arraySize);
+    mCellArray = CellArray(arraySize);
 
 }
 
@@ -446,9 +422,9 @@ void Interpreter::init(std::size_t arraySize)
 void Interpreter::optimizeLoops()
 {
 
-    std::vector<Instruction> optimizedCode;
-    std::map<int,int> mulAddOpcodes;
-    std::stack<int> loopStack;
+    Code optimizedCode;
+    std::map <decltype(Instruction::parameter),decltype(Instruction::parameter)> mulAddOpcodes;
+    LoopStack loopStack;
 
     Instruction currentInstr;
     int relativePointer = 0;
@@ -609,8 +585,8 @@ void Interpreter::stripMovePtr()
 {
 
     int movePtrVal = 0;
-    std::vector<Instruction> optimizedCode;
-    std::stack<int> loopStack;
+    Code optimizedCode;
+    LoopStack loopStack;
 
     for(auto currentInstr : mCode)
     {
@@ -676,8 +652,8 @@ void Interpreter::stripMovePtr()
 void Interpreter::stripEditVal()
 {
 
-    std::vector<Instruction> optimizedCode;
-    std::stack<int> loopStack;
+    Code optimizedCode;
+    LoopStack loopStack;
     Instruction lastInstr;
 
 
@@ -744,8 +720,8 @@ void Interpreter::stripEditVal()
 void Interpreter::findZeroOptimize()
 {
 
-    std::vector<Instruction> optimizedCode;
-    std::stack<int> loopStack;
+    Code optimizedCode;
+    LoopStack loopStack;
 
     for(auto currentInstr : mCode)
     {

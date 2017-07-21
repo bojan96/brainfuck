@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <set>
+#include <stack>
 #include <string>
 #include <cstddef>
 #include <cstdint>
@@ -48,16 +49,16 @@ private:
 
         Opcode opcode;
         std::int32_t parameter;
-        std::int32_t parameter2;
+        decltype(parameter) parameter2;
 
         // Avoid decoding OPmovePtr
-        std::int32_t parameter3;
+        decltype(parameter)  parameter3;
         // Avoid decoding OPeditVal
-        std::int32_t parameter4;
+        decltype(parameter)  parameter4;
 
         Instruction():parameter(0),parameter2(0),parameter3(0),parameter4(0){}
 
-        Instruction(Opcode op,std::int32_t parameter)
+        Instruction(Opcode op,decltype(parameter) parameter)
                     :opcode(op),parameter(parameter),parameter2(0),parameter3(0),
                     parameter4(0){}
 
@@ -65,13 +66,16 @@ private:
 
     };
 
-    void dumpCode(const std::vector<Instruction> &code,const std::string &filename);
+    using Code = std::vector <Instruction>;
+    using CellType = std::uint32_t;
+    using LoopStack = std::stack <decltype(Instruction::parameter)>;
+    using CellArray = std::vector <CellType>;
 
-    typedef std::uint32_t CellType;
+    void dumpCode(const Code &code,const std::string &filename);
 
-    std::vector<Instruction> mCode;
-    std::vector<CellType> mCellArray;
-    std::set<int> mLoopsToOptimize;
+    Code mCode;
+    CellArray mCellArray;
+    std::set <decltype(Instruction::parameter)> mLoopsToOptimize;
 
 };
 
