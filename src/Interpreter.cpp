@@ -152,7 +152,7 @@ Except parsing this function does:
 void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
 {
 
-    std::int32_t codePos = 0;
+    decltype(Instruction::parameter) codePos = 0;
     LoopStack loopStack;
 
     //Variables related to loop optimizations
@@ -205,7 +205,7 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
             mCode.push_back(Instruction(OPjumpOnZero));
             loopStack.push(mCode.size() - 1);
 
-            //Loop optimzation related code
+            //Loop optimization related code
             relativePointer = 0;
             loopCounter = 0;
             hasPrintRead = recentPop = false;
@@ -250,7 +250,7 @@ void Interpreter::parseFile(std::ifstream &sourceFile,bool debugMode)
         case '#':
 
             if(debugMode)
-                mCode.push_back({OPdebug,static_cast<std::int32_t>(codePos)});
+                mCode.push_back({OPdebug,codePos});
 
             break;
 
@@ -288,6 +288,7 @@ void Interpreter::executeCode(std::istream &stdInput)
         assert(dataPtr < mCellArray.size());
 
         dataPtr += toExecute->parameter3;
+        cellArray[dataPtr] += toExecute->parameter4;
 
         switch(toExecute->opcode)
         {
@@ -309,8 +310,6 @@ void Interpreter::executeCode(std::istream &stdInput)
             assert(toExecute->parameter >= 0);
             assert(static_cast<std::size_t>(toExecute->parameter) < mCellArray.size());
 
-            cellArray[dataPtr] += toExecute->parameter4;
-
             if(!cellArray[dataPtr])
                 toExecute = &code[toExecute->parameter];
 
@@ -321,8 +320,6 @@ void Interpreter::executeCode(std::istream &stdInput)
             assert(toExecute->parameter >= 0);
             assert(static_cast<std::size_t>(toExecute->parameter) < mCellArray.size());
 
-            cellArray[dataPtr] += toExecute->parameter4;
-
             if(cellArray[dataPtr])
                 toExecute = &code[toExecute->parameter];
 
@@ -330,8 +327,6 @@ void Interpreter::executeCode(std::istream &stdInput)
 
 
         case OPmulAdd:
-
-            cellArray[dataPtr] += toExecute->parameter4;
 
             /*If statement used to prevent out of range indexing when cellArray[dataPtr] == 0
               and dataPtr + toExecute->parameter < 0 */
@@ -341,8 +336,6 @@ void Interpreter::executeCode(std::istream &stdInput)
             break;
 
         case OPmulAddZero:
-
-            cellArray[dataPtr] += toExecute->parameter4;
 
             if(cellArray[dataPtr])
                 cellArray[dataPtr + toExecute->parameter] += cellArray[dataPtr] * toExecute->parameter2;
@@ -359,8 +352,6 @@ void Interpreter::executeCode(std::istream &stdInput)
 
         case OPfindZero:
 
-            cellArray[dataPtr] += toExecute->parameter4;
-
             while(cellArray[dataPtr])
                 dataPtr += toExecute->parameter;
 
@@ -368,15 +359,11 @@ void Interpreter::executeCode(std::istream &stdInput)
 
         case OPprint:
 
-            cellArray[dataPtr] += toExecute->parameter4;
-
             std::cout << static_cast<char>(cellArray[dataPtr]) << std::flush;
 
             break;
 
         case OPread:
-
-            cellArray[dataPtr] += toExecute->parameter4;
 
             stdinChar = stdInput.get();
 
@@ -499,7 +486,7 @@ void Interpreter::optimizeLoops()
 
                 /*
 
-                    Map stores elements in asscending ordered
+                    Map stores elements in ascending ordered
                     Based on that, this code [<->-<<+>>] is optimized to
 
                     mulAdd -2, 1, 0
