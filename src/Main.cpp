@@ -14,7 +14,9 @@ class Bf
 
 public:
 
-    Bf():mArraySize(10000),mDebug(false),mHelp(false)
+	enum class InputType {stdin, file, string};
+
+    Bf():mArraySize(10000),mDebug(false),mHelp(false),inputType(InputType::stdin)
     {}
 
     void run(int argc,char *argv[])
@@ -29,7 +31,10 @@ public:
         {
 
             Interpreter interpreter;
-            interpreter.run(mSourceFile,*mStdin,mArraySize,mDebug);
+            if(inputType == InputType::stdin)
+            	interpreter.run(mSourceFile,std::cin,mArraySize,mDebug);
+            else
+            	interpreter.run(mSourceFile,*mStdin,mArraySize,mDebug);
 
         }
 
@@ -86,7 +91,6 @@ private:
     void parseArgs(int argc,char *argv[])
     {
 
-        bool useFileInput = false;
         std::string stdinString;
         std::string stdinFilename;
         int arraySize;
@@ -107,7 +111,7 @@ private:
                     if(i + 1 < argc)
                     {
 
-                        useFileInput = false;
+                        inputType = InputType::string;
                         stdinString = argv[++i];
 
                     }
@@ -121,7 +125,7 @@ private:
                     if(i + 1 < argc)
                     {
 
-                        useFileInput = true;
+                        inputType = InputType::file;
                         stdinFilename = argv[++i];
 
                     }
@@ -185,7 +189,7 @@ private:
         if(!fileSpecified)
             throw std::runtime_error("No input file specified");
 
-        if(useFileInput)
+        if(inputType == InputType::file)
         {
 
             std::unique_ptr<std::ifstream> stdin(new std::ifstream(stdinFilename));
@@ -196,7 +200,7 @@ private:
             mStdin = std::move(stdin);
 
         }
-        else
+        else if(inputType == InputType::string )
             mStdin = std::unique_ptr<std::istream> (new std::istringstream(stdinString));
 
     }
@@ -206,6 +210,7 @@ private:
     std::size_t mArraySize;
     bool mDebug;
     bool mHelp;
+    InputType inputType;
 
 };
 

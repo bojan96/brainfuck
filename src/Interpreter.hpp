@@ -32,11 +32,11 @@ private:
         OPeditVal, // parameter1 - offset
         OPmovePtr, // parameter1 - offset
         OPjumpOnZero, // parameter1 - index of next instr on branch
-        OPjumpOnNonZero, // parameter1 - index of next inst on branch
+        OPjumpOnNonZero, // parameter1 - index of next instr on branch
         OPmulAdd, // parameter1 - relative offset, parameter2 - increment
         OPmulAddZero,
         OPsetZero,
-        OPfindZero,
+        OPfindZero, //parameter1 - step
         OPprint,
         OPread,
         OPdebug,
